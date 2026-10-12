@@ -19,15 +19,12 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
-    volumes:
-      - kafka-data:/tmp/kraft-combined-logs
     healthcheck:
       test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "kafka:19092", "--list"]
       interval: 10s
       timeout: 10s
       retries: 12
-      start_period: 30s
+      start_period: 15s
 
   kafka-init:
     image: apache/kafka:4.2.0
@@ -38,5 +35,13 @@ services:
     command: ["--bootstrap-server", "kafka:19092", "--create", "--if-not-exists", "--topic", "citas", "--partitions", "3", "--replication-factor", "1"]
     restart: "no"
 
-volumes:
-  kafka-data:
+  kafka-ui:
+    image: ghcr.io/kafbat/kafka-ui:latest
+    ports:
+      - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
+    depends_on:
+      kafka:
+        condition: service_healthy
